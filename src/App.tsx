@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
 import { auth } from './lib/firebase';
+import { EMAIL_KEY } from './pages/LoginPage';
 import { useAuthStore } from './store/useAuthStore';
 import { useGameStore } from './store/useGameStore';
 import { Header } from './components/Header';
@@ -59,6 +60,17 @@ export default function App() {
   const { setUser, setLoading } = useAuthStore();
 
   useEffect(() => {
+    // Handle magic link redirect
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+      const email = window.localStorage.getItem(EMAIL_KEY) ?? window.prompt('Bekreft epostadressen din:') ?? '';
+      signInWithEmailLink(auth, email, window.location.href)
+        .then(() => {
+          window.localStorage.removeItem(EMAIL_KEY);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        })
+        .catch(() => {});
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
