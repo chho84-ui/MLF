@@ -10,39 +10,47 @@ export function useFirestoreSync() {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasSynced = useRef(false);
 
-  // Load from Firestore when user logs in
   useEffect(() => {
-    if (!user) {
-      hasSynced.current = false;
-      return;
-    }
-
+    if (!user) { hasSynced.current = false; return; }
     async function load() {
       const ref = doc(db, 'users', user!.uid);
       const snap = await getDoc(ref);
-      if (snap.exists()) {
-        gameState.loadFromFirestore(snap.data());
-      }
+      if (snap.exists()) gameState.loadFromFirestore(snap.data());
       hasSynced.current = true;
     }
-
     load();
   }, [user?.uid]);
 
-  // Save to Firestore on state changes (debounced 2s)
   useEffect(() => {
     if (!user || !hasSynced.current) return;
-
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       const { xp, level, levelResults, totalCorrect, totalAttempted, bestStreak, playerName } = gameState;
-      const ref = doc(db, 'users', user.uid);
-      await setDoc(ref, { xp, level, levelResults, totalCorrect, totalAttempted, bestStreak, playerName }, { merge: true });
+
+      // Save private game state
+      await setDoc(
+        doc(db, 'users', user.uid),
+        { xp, level, levelResults, totalCorrect, totalAttempted, bestStreak, playerName },
+        { merge: true }
+      );
+
+      // Save public leaderboard entry (only public fields)
+      await setDoc(
+        doc(db, 'leaderboard', user.uid),
+        {
+          playerName: playerName || user.displayName || 'Anonym',
+          photoURL: user.photoURL ?? null,
+          xp,
+          level,
+          totalCorrect,
+          bestStreak,
+          updatedAt: new Date(),
+        },
+        { merge: true }
+      );
     }, 2000);
 
-    return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-    };
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
   }, [
     user?.uid,
     gameState.xp,

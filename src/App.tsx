@@ -11,6 +11,7 @@ import { HomePage } from './pages/HomePage';
 import { TopicPage } from './pages/TopicPage';
 import { GamePage } from './pages/GamePage';
 import { ResultsPage } from './pages/ResultsPage';
+import { LeaderboardPage } from './pages/LeaderboardPage';
 import { useFirestoreSync } from './hooks/useFirestoreSync';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
@@ -52,6 +53,7 @@ function AppContent() {
       <Route path="/topic/:topicId" element={<AppLayout><TopicPage /></AppLayout>} />
       <Route path="/game/:topicId/:levelId" element={<GamePage />} />
       <Route path="/results/:topicId/:levelId" element={<AppLayout><ResultsPage /></AppLayout>} />
+      <Route path="/leaderboard" element={<AppLayout><LeaderboardPage /></AppLayout>} />
     </Routes>
   );
 }

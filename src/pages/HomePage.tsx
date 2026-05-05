@@ -61,11 +61,18 @@ export function HomePage() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto px-4 py-6">
         {/* Greeting */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-black text-gray-800">
-            Hei, {playerName}! 👋
-          </h1>
-          <p className="text-gray-500 mt-1">Velg et tema og start øving!</p>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-black text-gray-800">Hei, {playerName}! 👋</h1>
+            <p className="text-gray-500 mt-1">Velg et tema og start øving!</p>
+          </div>
+          <Link
+            to="/leaderboard"
+            className="flex flex-col items-center gap-1 bg-gradient-to-br from-yellow-400 to-amber-500 text-white rounded-2xl px-4 py-3 shadow-md hover:opacity-90 active:scale-95 transition-all"
+          >
+            <span className="text-2xl">🏆</span>
+            <span className="text-xs font-bold">Toppliste</span>
+          </Link>
         </div>
 
         {/* Stats bar */}

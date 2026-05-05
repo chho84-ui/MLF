@@ -102,6 +102,13 @@ export function ResultsPage() {
           </Link>
 
           <Link
+            to="/leaderboard"
+            className="block w-full text-center bg-gradient-to-r from-yellow-400 to-amber-500 text-white font-bold py-3 rounded-2xl hover:opacity-90 active:scale-98 transition-all shadow-sm"
+          >
+            🏆 Se topplisten
+          </Link>
+
+          <Link
             to={`/topic/${topic.id}`}
             className="block w-full text-center text-gray-400 hover:text-gray-600 py-3 transition-colors"
           >
