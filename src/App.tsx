@@ -55,7 +55,7 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter basename="/mlf">
+    <BrowserRouter>
       <AppRoutes />
     </BrowserRouter>
   );
