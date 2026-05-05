@@ -10,6 +10,7 @@ interface GameStore extends GameState {
   saveLevelResult: (result: LevelResult) => void;
   updateStreak: (correct: boolean) => void;
   resetProgress: () => void;
+  loadFromFirestore: (state: Partial<GameState>) => void;
   getPlayerLevel: () => number;
   getXPProgress: () => { current: number; needed: number; percent: number };
   getLevelResult: (topicId: string, levelId: string) => LevelResult | undefined;
@@ -66,6 +67,18 @@ export const useGameStore = create<GameStore>()(
         }),
 
       resetProgress: () => set(initialState),
+
+      loadFromFirestore: (remote) =>
+        set((local) => ({
+          playerName: remote.playerName || local.playerName,
+          xp: Math.max(remote.xp ?? 0, local.xp),
+          level: Math.max(remote.level ?? 1, local.level),
+          totalCorrect: Math.max(remote.totalCorrect ?? 0, local.totalCorrect),
+          totalAttempted: Math.max(remote.totalAttempted ?? 0, local.totalAttempted),
+          bestStreak: Math.max(remote.bestStreak ?? 0, local.bestStreak),
+          streak: local.streak,
+          levelResults: { ...local.levelResults, ...remote.levelResults },
+        })),
 
       getPlayerLevel: () => {
         const { xp } = get();

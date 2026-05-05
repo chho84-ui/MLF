@@ -1,7 +1,7 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { topics } from '../data/topics';
 import { useGameStore } from '../store/useGameStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { StarRating } from '../components/StarRating';
 
 const colorMap = {
@@ -50,50 +50,12 @@ const colorMap = {
 };
 
 export function HomePage() {
-  const { playerName, setPlayerName, totalCorrect, totalAttempted, bestStreak, levelResults } = useGameStore();
-  const [nameInput, setNameInput] = useState('');
-  const [showNameForm, setShowNameForm] = useState(!playerName);
-
-  const handleNameSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (nameInput.trim()) {
-      setPlayerName(nameInput.trim());
-      setShowNameForm(false);
-    }
-  };
+  const { totalCorrect, totalAttempted, bestStreak, levelResults } = useGameStore();
+  const user = useAuthStore((s) => s.user);
+  const playerName = user?.displayName || user?.email?.split('@')[0] || 'Spiller';
 
   const totalStarsEarned = Object.values(levelResults).reduce((sum, r) => sum + r.stars, 0);
   const accuracy = totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 100) : 0;
-
-  if (showNameForm) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl text-center animate-bounce-in">
-          <div className="text-6xl mb-4">🧮</div>
-          <h1 className="text-3xl font-black text-gray-800 mb-2">MatteMester</h1>
-          <p className="text-gray-500 mb-8">Bli god i matte mens du har det gøy!</p>
-          <form onSubmit={handleNameSubmit}>
-            <input
-              type="text"
-              placeholder="Skriv inn navnet ditt..."
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-indigo-400 mb-4"
-              autoFocus
-              maxLength={20}
-            />
-            <button
-              type="submit"
-              disabled={!nameInput.trim()}
-              className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-lg py-3 rounded-xl hover:opacity-90 active:scale-95 transition-all disabled:opacity-40"
-            >
-              La oss starte! 🚀
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">

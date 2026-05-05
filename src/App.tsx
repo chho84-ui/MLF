@@ -1,10 +1,16 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './lib/firebase';
+import { useAuthStore } from './store/useAuthStore';
+import { useGameStore } from './store/useGameStore';
 import { Header } from './components/Header';
+import { LoginPage } from './pages/LoginPage';
 import { HomePage } from './pages/HomePage';
 import { TopicPage } from './pages/TopicPage';
 import { GamePage } from './pages/GamePage';
 import { ResultsPage } from './pages/ResultsPage';
-import { useGameStore } from './store/useGameStore';
+import { useFirestoreSync } from './hooks/useFirestoreSync';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,48 +21,54 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-function AppRoutes() {
-  const { playerName } = useGameStore();
+function AppContent() {
+  useFirestoreSync();
+  const user = useAuthStore((s) => s.user);
+  const loading = useAuthStore((s) => s.loading);
+  const setPlayerName = useGameStore((s) => s.setPlayerName);
+
+  // Sync Firebase display name → game store player name
+  useEffect(() => {
+    if (user?.displayName) setPlayerName(user.displayName);
+  }, [user?.displayName]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="text-5xl mb-4 animate-spin-slow">🧮</div>
+          <p className="text-white/80">Laster...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return <LoginPage />;
 
   return (
     <Routes>
-      <Route
-        path="/"
-        element={
-          playerName ? (
-            <AppLayout>
-              <HomePage />
-            </AppLayout>
-          ) : (
-            <HomePage />
-          )
-        }
-      />
-      <Route
-        path="/topic/:topicId"
-        element={
-          <AppLayout>
-            <TopicPage />
-          </AppLayout>
-        }
-      />
+      <Route path="/" element={<AppLayout><HomePage /></AppLayout>} />
+      <Route path="/topic/:topicId" element={<AppLayout><TopicPage /></AppLayout>} />
       <Route path="/game/:topicId/:levelId" element={<GamePage />} />
-      <Route
-        path="/results/:topicId/:levelId"
-        element={
-          <AppLayout>
-            <ResultsPage />
-          </AppLayout>
-        }
-      />
+      <Route path="/results/:topicId/:levelId" element={<AppLayout><ResultsPage /></AppLayout>} />
     </Routes>
   );
 }
 
 export default function App() {
+  const { setUser, setLoading } = useAuthStore();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
   return (
     <BrowserRouter>
-      <AppRoutes />
+      <AppContent />
     </BrowserRouter>
   );
 }
