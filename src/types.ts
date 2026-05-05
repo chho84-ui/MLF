@@ -1,16 +1,29 @@
-export type QuestionType = 'multiple-choice' | 'fill-in';
+export type QuestionType = 'multiple-choice' | 'fill-in' | 'match-pairs' | 'sort-order';
 
 export interface Choice {
   id: string;
   text: string;
 }
 
+export interface MatchPair {
+  left: string;
+  right: string;
+}
+
 export interface Question {
   id: string;
   text: string;
   type: QuestionType;
+  // multiple-choice
   choices?: Choice[];
-  correctAnswer: string;
+  correctAnswer?: string;
+  // fill-in
+  acceptedAnswers?: string[];
+  unit?: string;
+  // match-pairs
+  pairs?: MatchPair[];
+  // sort-order
+  items?: string[];
   explanation: string;
   xp: number;
 }
@@ -20,7 +33,6 @@ export interface Level {
   title: string;
   description: string;
   questions: Question[];
-  requiredStars?: number;
 }
 
 export type TopicColor = 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'teal';
