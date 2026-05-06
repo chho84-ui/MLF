@@ -92,7 +92,7 @@ export function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-6">
           <div className="text-6xl mb-3">🧮</div>
-          <h1 className="text-3xl font-black text-gray-800">MatteMester</h1>
+          <h1 className="text-3xl font-black text-gray-800">Mestre</h1>
           <p className="text-gray-500 mt-1">Bli god i matte mens du har det gøy!</p>
         </div>
 

@@ -25,7 +25,7 @@ export function Header() {
         <div className="flex items-center justify-between mb-3">
           <Link to="/" className="flex items-center gap-2 text-white font-bold text-xl hover:opacity-90 transition-opacity">
             <span className="text-2xl">🧮</span>
-            <span>MatteMester</span>
+            <span>Mestre</span>
           </Link>
           <div className="flex items-center gap-3">
             {streak >= 2 && (

@@ -9,6 +9,8 @@ import { MatchPairsQuestion } from '../components/questions/MatchPairsQuestion';
 import { SortQuestion } from '../components/questions/SortQuestion';
 import type { Question } from '../types';
 
+const MAX_LIVES = 3;
+
 type AnswerState = 'idle' | 'correct' | 'wrong';
 
 const TYPE_LABELS: Record<string, string> = {
@@ -20,6 +22,18 @@ const TYPE_LABELS: Record<string, string> = {
 
 function shuffleArray<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function Hearts({ lives, shake }: { lives: number; shake: boolean }) {
+  return (
+    <div className={`flex gap-1 ${shake ? 'animate-shake' : ''}`}>
+      {Array.from({ length: MAX_LIVES }).map((_, i) => (
+        <span key={i} className={`text-xl transition-all duration-300 ${i < lives ? '' : 'opacity-20 grayscale'}`}>
+          ❤️
+        </span>
+      ))}
+    </div>
+  );
 }
 
 export function GamePage() {
@@ -35,20 +49,22 @@ export function GamePage() {
   );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answerState, setAnswerState] = useState<AnswerState>('idle');
+  const [lives, setLives] = useState(MAX_LIVES);
+  const [heartShake, setHeartShake] = useState(false);
   const [score, setScore] = useState(0);
   const [xpGained, setXpGained] = useState(0);
   const [floatingXP, setFloatingXP] = useState<number | null>(null);
   const [levelUpTo, setLevelUpTo] = useState<number | null>(null);
   const [isFinished, setIsFinished] = useState(false);
-  // for multiple-choice
+  const [isGameOver, setIsGameOver] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  // key to remount interactive components on new question
   const [questionKey, setQuestionKey] = useState(0);
 
   const currentQuestion = questions[currentIndex];
 
   const handleAnswered = useCallback((correct: boolean) => {
     setAnswerState(correct ? 'correct' : 'wrong');
+
     if (correct) {
       const earned = currentQuestion.xp;
       setScore((s) => s + 1);
@@ -61,6 +77,13 @@ export function GamePage() {
       setFloatingXP(earned);
     } else {
       updateStreak(false);
+      setHeartShake(true);
+      setTimeout(() => setHeartShake(false), 500);
+      setLives((l) => {
+        const newLives = l - 1;
+        if (newLives <= 0) setTimeout(() => setIsGameOver(true), 800);
+        return newLives;
+      });
     }
   }, [currentQuestion, xp, addXP, updateStreak]);
 
@@ -83,7 +106,8 @@ export function GamePage() {
 
   useEffect(() => {
     if (isFinished && topic && level_) {
-      const stars = score >= questions.length ? 3 : score >= Math.ceil(questions.length * 0.6) ? 2 : score > 0 ? 1 : 0;
+      const wrong = questions.length - score;
+      const stars = wrong === 0 ? 3 : wrong <= 1 ? 2 : wrong <= 2 ? 1 : 0;
       saveLevelResult({ topicId: topic.id, levelId: level_.id, stars, score, totalQuestions: questions.length });
       navigate(`/results/${topicId}/${levelId}`, { state: { score, total: questions.length, xpGained } });
     }
@@ -92,8 +116,42 @@ export function GamePage() {
   if (!topic || !level_) return <Navigate to="/" replace />;
 
   const progress = (currentIndex / questions.length) * 100;
+  const isInteractive = currentQuestion.type === 'match-pairs' || currentQuestion.type === 'sort-order';
+  const showNextButton = answerState !== 'idle' && !isGameOver;
 
-  // Multiple choice styles
+  // ── Game Over screen ──────────────────────────────────────────────────────
+  if (isGameOver) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-500 to-rose-700 flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-bounce-in">
+          <div className="text-7xl mb-4">💔</div>
+          <h1 className="text-3xl font-black text-gray-800 mb-2">Ingen liv igjen!</h1>
+          <p className="text-gray-500 mb-2">Du kom til spørsmål {currentIndex + 1} av {questions.length}</p>
+          <p className="text-gray-500 mb-6">{score} riktige svar</p>
+
+          <div className="flex gap-2 mb-3">
+            {Array.from({ length: MAX_LIVES }).map((_, i) => (
+              <div key={i} className="flex-1 h-2 rounded-full bg-red-200" />
+            ))}
+          </div>
+
+          <button
+            onClick={() => navigate(`/game/${topicId}/${levelId}`)}
+            className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-lg py-4 rounded-2xl hover:opacity-90 active:scale-98 transition-all shadow-md mb-3"
+          >
+            🔄 Prøv igjen
+          </button>
+          <button
+            onClick={() => navigate(`/topic/${topicId}`)}
+            className="w-full text-gray-400 hover:text-gray-600 py-2 text-sm transition-colors"
+          >
+            ← Tilbake til nivåer
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const getChoiceStyle = (choiceId: string) => {
     const base = 'w-full text-left px-5 py-4 rounded-2xl border-2 font-medium transition-all duration-150';
     if (answerState === 'idle') {
@@ -103,15 +161,6 @@ export function GamePage() {
     if (choiceId === selectedAnswer) return `${base} bg-red-50 border-red-400 text-red-800`;
     return `${base} bg-gray-50 border-gray-200 text-gray-400`;
   };
-
-  // For match-pairs and sort-order: auto-advance after callback
-  const handleInteractiveAnswer = useCallback((correct: boolean) => {
-    handleAnswered(correct);
-    // slight delay so animation plays, then show explanation
-  }, [handleAnswered]);
-
-  const isInteractive = currentQuestion.type === 'match-pairs' || currentQuestion.type === 'sort-order';
-  const showNextButton = answerState !== 'idle';
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -123,7 +172,10 @@ export function GamePage() {
               ✕ Avslutt
             </button>
             <span className="text-gray-500 text-sm font-medium">{currentIndex + 1} / {questions.length}</span>
-            <div className="text-yellow-600 font-bold text-sm">⭐ +{xpGained} XP</div>
+            <div className="flex items-center gap-3">
+              <Hearts lives={lives} shake={heartShake} />
+              <div className="text-yellow-600 font-bold text-sm">⭐ +{xpGained}</div>
+            </div>
           </div>
           <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
             <div
@@ -136,7 +188,6 @@ export function GamePage() {
 
       {/* Question area */}
       <div className="flex-1 max-w-2xl mx-auto w-full px-4 py-6 flex flex-col">
-        {/* Badge */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">{topic.emoji}</span>
@@ -152,20 +203,17 @@ export function GamePage() {
           ${answerState === 'correct' ? 'ring-2 ring-green-400' : ''}
           ${answerState === 'wrong' && currentQuestion.type === 'multiple-choice' ? 'ring-2 ring-red-400 animate-shake' : ''}
         `}>
-          <p className="text-xl font-bold text-gray-800 leading-relaxed">{currentQuestion.text}</p>
+          <p className="text-xl font-bold text-gray-800 leading-relaxed whitespace-pre-line">
+            {currentQuestion.text}
+          </p>
         </div>
 
-        {/* Question input — keyed so it remounts cleanly */}
+        {/* Answers */}
         <div key={questionKey} className="flex flex-col gap-4 flex-1">
           {currentQuestion.type === 'multiple-choice' && currentQuestion.choices && (
             <div className="grid gap-3">
               {currentQuestion.choices.map((choice) => (
-                <button
-                  key={choice.id}
-                  onClick={() => handleMCAnswer(choice.id)}
-                  disabled={answerState !== 'idle'}
-                  className={getChoiceStyle(choice.id)}
-                >
+                <button key={choice.id} onClick={() => handleMCAnswer(choice.id)} disabled={answerState !== 'idle'} className={getChoiceStyle(choice.id)}>
                   <span className="mr-3 font-bold text-gray-400 uppercase">{choice.id})</span>
                   {choice.text}
                 </button>
@@ -178,11 +226,11 @@ export function GamePage() {
           )}
 
           {currentQuestion.type === 'match-pairs' && currentQuestion.pairs && answerState === 'idle' && (
-            <MatchPairsQuestion pairs={currentQuestion.pairs} onAnswer={handleInteractiveAnswer} />
+            <MatchPairsQuestion pairs={currentQuestion.pairs} onAnswer={handleAnswered} />
           )}
 
           {currentQuestion.type === 'sort-order' && currentQuestion.items && answerState === 'idle' && (
-            <SortQuestion items={currentQuestion.items} onAnswer={handleInteractiveAnswer} />
+            <SortQuestion items={currentQuestion.items} onAnswer={handleAnswered} />
           )}
 
           {/* Explanation + Next */}
@@ -194,15 +242,12 @@ export function GamePage() {
                   <p className="text-gray-700 text-sm">{currentQuestion.explanation}</p>
                 </div>
               )}
-              {isInteractive && showNextButton && (
+              {isInteractive && (
                 <div className={`rounded-2xl p-4 mb-4 ${answerState === 'correct' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
                   <p className="text-gray-700 text-sm">{currentQuestion.explanation}</p>
                 </div>
               )}
-              <button
-                onClick={handleNext}
-                className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-lg py-4 rounded-2xl hover:opacity-90 active:scale-98 transition-all shadow-md"
-              >
+              <button onClick={handleNext} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-lg py-4 rounded-2xl hover:opacity-90 active:scale-98 transition-all shadow-md">
                 {currentIndex + 1 >= questions.length ? 'Se resultat 🏆' : 'Neste spørsmål →'}
               </button>
             </div>

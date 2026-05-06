@@ -8,6 +8,7 @@ import { useGameStore } from './store/useGameStore';
 import { Header } from './components/Header';
 import { LoginPage } from './pages/LoginPage';
 import { HomePage } from './pages/HomePage';
+import { SubjectPage } from './pages/SubjectPage';
 import { TopicPage } from './pages/TopicPage';
 import { GamePage } from './pages/GamePage';
 import { ResultsPage } from './pages/ResultsPage';
@@ -50,6 +51,7 @@ function AppContent() {
   return (
     <Routes>
       <Route path="/" element={<AppLayout><HomePage /></AppLayout>} />
+      <Route path="/subject/:subjectId" element={<AppLayout><SubjectPage /></AppLayout>} />
       <Route path="/topic/:topicId" element={<AppLayout><TopicPage /></AppLayout>} />
       <Route path="/game/:topicId/:levelId" element={<GamePage />} />
       <Route path="/results/:topicId/:levelId" element={<AppLayout><ResultsPage /></AppLayout>} />
