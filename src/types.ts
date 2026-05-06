@@ -58,6 +58,7 @@ export interface Subject {
 }
 
 
+export interface LevelResult {
   topicId: string;
   levelId: string;
   stars: number;
