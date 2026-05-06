@@ -59,6 +59,7 @@ export function GamePage() {
   const [isGameOver, setIsGameOver] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [questionKey, setQuestionKey] = useState(0);
+  const [hintShown, setHintShown] = useState(false);
 
   const currentQuestion = questions[currentIndex];
 
@@ -66,7 +67,7 @@ export function GamePage() {
     setAnswerState(correct ? 'correct' : 'wrong');
 
     if (correct) {
-      const earned = currentQuestion.xp;
+      const earned = hintShown ? Math.ceil(currentQuestion.xp / 2) : currentQuestion.xp;
       setScore((s) => s + 1);
       setXpGained((x) => x + earned);
       updateStreak(true);
@@ -85,7 +86,7 @@ export function GamePage() {
         return newLives;
       });
     }
-  }, [currentQuestion, xp, addXP, updateStreak]);
+  }, [currentQuestion, xp, addXP, updateStreak, hintShown]);
 
   const handleMCAnswer = useCallback((choiceId: string) => {
     if (answerState !== 'idle') return;
@@ -101,6 +102,7 @@ export function GamePage() {
       setAnswerState('idle');
       setSelectedAnswer(null);
       setQuestionKey((k) => k + 1);
+      setHintShown(false);
     }
   }, [currentIndex, questions.length]);
 
@@ -199,7 +201,7 @@ export function GamePage() {
         </div>
 
         {/* Question card */}
-        <div className={`bg-white rounded-3xl p-5 shadow-sm border border-gray-100 mb-5 animate-slide-in
+        <div className={`bg-white rounded-3xl p-5 shadow-sm border border-gray-100 mb-3 animate-slide-in
           ${answerState === 'correct' ? 'ring-2 ring-green-400' : ''}
           ${answerState === 'wrong' && currentQuestion.type === 'multiple-choice' ? 'ring-2 ring-red-400 animate-shake' : ''}
         `}>
@@ -207,6 +209,29 @@ export function GamePage() {
             {currentQuestion.text}
           </p>
         </div>
+
+        {/* Hint panel */}
+        {hintShown && answerState === 'idle' && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-3 animate-slide-in flex gap-2">
+            <span className="text-lg shrink-0">💡</span>
+            <p className="text-amber-800 text-sm leading-snug">{currentQuestion.explanation}</p>
+          </div>
+        )}
+
+        {/* Hint button — only while unanswered */}
+        {answerState === 'idle' && !hintShown && (
+          <button
+            onClick={() => setHintShown(true)}
+            className="self-start text-xs text-amber-600 font-semibold bg-amber-50 border border-amber-200 rounded-full px-3 py-1.5 mb-3 hover:bg-amber-100 transition-colors"
+          >
+            💡 Vis hint  <span className="text-amber-400 font-normal ml-1">−½ XP</span>
+          </button>
+        )}
+        {answerState === 'idle' && hintShown && (
+          <div className="self-start text-xs text-amber-500 font-semibold bg-amber-50 border border-amber-200 rounded-full px-3 py-1.5 mb-3 opacity-60">
+            💡 Hint brukt  <span className="font-normal">−½ XP</span>
+          </div>
+        )}
 
         {/* Answers */}
         <div key={questionKey} className="flex flex-col gap-4 flex-1">
@@ -238,7 +263,11 @@ export function GamePage() {
             <div className="animate-bounce-in mt-auto">
               {!isInteractive && (
                 <div className={`rounded-2xl p-4 mb-4 ${answerState === 'correct' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                  <p className="font-bold text-lg mb-1">{answerState === 'correct' ? '✅ Riktig!' : '❌ Feil!'}</p>
+                  <p className="font-bold text-lg mb-1">
+                    {answerState === 'correct'
+                      ? hintShown ? '✅ Riktig! (hint brukt)' : '✅ Riktig!'
+                      : '❌ Feil!'}
+                  </p>
                   <p className="text-gray-700 text-sm">{currentQuestion.explanation}</p>
                 </div>
               )}
