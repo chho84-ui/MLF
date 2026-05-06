@@ -1,4 +1,4 @@
-import { useParams, Link, Navigate } from 'react-router-dom';
+import { useParams, Link, Navigate, useNavigate } from 'react-router-dom';
 import { subjects } from '../data/subjects';
 import { topics } from '../data/topics';
 import { useGameStore } from '../store/useGameStore';
@@ -29,6 +29,7 @@ const topicColors = {
 
 export function SubjectPage() {
   const { subjectId } = useParams<{ subjectId: string }>();
+  const navigate = useNavigate();
   const { levelResults } = useGameStore();
 
   const subject = subjects.find((s) => s.id === subjectId);
@@ -64,6 +65,15 @@ export function SubjectPage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6">
+        <button
+          onClick={() => navigate(`/exam/${subject.id}`)}
+          className="w-full mb-5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-base py-4 rounded-2xl hover:opacity-90 active:scale-98 transition-all shadow-md flex items-center justify-center gap-2"
+        >
+          <span>📝</span>
+          <span>Ta tentamen</span>
+          <span className="ml-1 text-white/70 text-sm font-normal">— tilfeldig generert</span>
+        </button>
+
         <h2 className="text-lg font-bold text-gray-700 mb-4">Velg tema</h2>
         <div className="grid gap-4">
           {subjectTopics.map((topic, index) => {
