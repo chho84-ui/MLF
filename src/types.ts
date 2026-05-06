@@ -46,7 +46,18 @@ export interface Topic {
   levels: Level[];
 }
 
-export interface LevelResult {
+export type SubjectColor = 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'teal' | 'indigo' | 'pink';
+
+export interface Subject {
+  id: string;
+  title: string;
+  emoji: string;
+  description: string;
+  color: SubjectColor;
+  topicIds: string[];
+}
+
+
   topicId: string;
   levelId: string;
   stars: number;
