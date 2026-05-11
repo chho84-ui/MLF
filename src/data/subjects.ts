@@ -9,4 +9,12 @@ export const subjects: Subject[] = [
     color: 'blue',
     topicIds: ['algebra', 'geometri', 'prosent', 'statistikk', 'funksjoner', 'potenser'],
   },
+  {
+    id: 'naturfag',
+    title: 'Naturfag',
+    emoji: '🔬',
+    description: 'Solsystemet, naturen og kroppen',
+    color: 'teal',
+    topicIds: ['solsystemet'],
+  },
 ];
